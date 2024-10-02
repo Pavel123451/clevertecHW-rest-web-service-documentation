@@ -353,8 +353,10 @@ components:
           type: string
           description: Краткое описание канала
           example: "Канал о новинках технологий"
-        author:
-          $ref: '#/components/schemas/User'
+        authorNickname:
+          type: string
+          description: Никнейм автора канала
+          example: petya1234
         subscriberCount:
           type: integer
           description: Количество подписчиков
