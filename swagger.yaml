@@ -50,7 +50,7 @@ paths:
         '400':
           description: Неверный запрос
 
-  /users/{nickname}:
+  /users/{id}:
     get:
       tags:
         - Users
@@ -58,12 +58,12 @@ paths:
       description: Возвращает информацию о пользователе по указанному никнейму
       parameters:
         - in: path
-          name: nickname
+          name: id
           required: true
           schema:
-            type: string
-            example: "petya1234"
-          description: Никнейм пользователя
+            type: integer
+            example: 1
+          description: Id пользователя
       responses:
         '200':
           description: Информация о пользователе
@@ -81,18 +81,47 @@ paths:
       description: Обновляет информацию пользователя по указанному никнейму
       parameters:
         - in: path
-          name: nickname
+          name: id
           required: true
           schema:
-            type: string
-            example: "petya1234"
+            type: integer
+            example: 1
           description: Никнейм пользователя
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/UserDto'
+      responses:
+        '200':
+          description: Информация о пользователе успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пользователь не найден
+
+    patch:
+      tags:
+        - Users
+      summary: Частичное обновление информации о пользователе
+      description: Обновляет только те поля пользователя, которые указаны в запросе
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: Id пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
       responses:
         '200':
           description: Информация о пользователе успешно обновлена
@@ -108,13 +137,13 @@ paths:
       tags:
         - Channels
       summary: Создать новый канал
-      description: Создает новый канал с указанными данными
+      description: Создает новый канал с указанными данными.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Channel'
+              $ref: '#/components/schemas/ChannelCreate'
       responses:
         '201':
           description: Канал успешно создан
@@ -122,6 +151,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Channel'
+        '404':
+          description: Пользователь или категория не найдены
         '400':
           description: Неверный запрос
 
@@ -129,7 +160,7 @@ paths:
       tags:
         - Channels
       summary: Получить список всех каналов
-      description: Возвращает список всех каналов с поддержкой пагинации и фильтрации по названию, языку, категории
+      description: Возвращает список всех каналов с поддержкой пагинации и фильтрации по названию, языку, категории, а также информацию о количестве страниц и записей
       parameters:
         - in: query
           name: name
@@ -144,11 +175,11 @@ paths:
             example: "RU"
           description: Фильтр по языку канала
         - in: query
-          name: category
+          name: categoryId
           schema:
-            type: string
-            example: "Технологии"
-          description: Фильтр по категории канала
+            type: integer
+            example: 1
+          description: Фильтр по id категории канала
         - in: query
           name: page
           schema:
@@ -163,49 +194,60 @@ paths:
           description: Количество элементов на странице
       responses:
         '200':
-          description: Список каналов
+          description: Список каналов с информацией о пагинации
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      description: Название канала
-                      example: "Tech Insights"
-                    subscriberCount:
-                      type: integer
-                      description: Количество подписчиков
-                      example: 150
-                    language:
-                      type: string
-                      description: Основной язык канала
-                      example: "RU"
-                    avatarUrl:
-                      type: string
-                      description: Ссылка на аватарку канала
-                      example: "http://example.com/avatar.jpg"
-                    category:
-                      type: string
-                      description: Категория канала
-                      example: "Технологии"
+                type: object
+                properties:
+                  totalRecords:
+                    type: integer
+                    description: Общее количество записей
+                    example: 100
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+                    example: 10
+                  channels:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Название канала
+                          example: "Tech Insights"
+                        subscriberCount:
+                          type: integer
+                          description: Количество подписчиков
+                          example: 150
+                        language:
+                          type: string
+                          description: Основной язык канала
+                          example: "RU"
+                        categoryId:
+                          type: integer
+                          description: ID категории канала
+                          example: 1
+                        avatar:
+                          type: string
+                          description: Аватар в формате base64
+                          example: "data:image/png;base64,iVBORw0K..."
 
-  /channels/{channelName}:
+  /channels/{id}:
     get:
       tags:
         - Channels
       summary: Получить информацию о канале
-      description: Возвращает подробную информацию о канале
+      description: Возвращает подробную информацию о канале по ID, включая количество подписчиков
       parameters:
         - in: path
-          name: channelName
+          name: id
           required: true
           schema:
-            type: string
-            example: "Tech Insights"
-          description: Название канала
+            type: integer
+            example: 1
+          description: ID канала
       responses:
         '200':
           description: Подробная информация о канале
@@ -213,27 +255,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Channel'
+        '404':
+          description: Канал не найден
 
     put:
       tags:
         - Channels
       summary: Обновить информацию о канале
-      description: Обновляет информацию о канале по указанному названию
+      description: Обновляет информацию о канале по ID
       parameters:
         - in: path
-          name: channelName
+          name: id
           required: true
           schema:
-            type: string
-            example: "Tech Insights"
-          description: Название канала
-            type
+            type: integer
+            example: 1
+          description: ID канала
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Channel'
+              $ref: '#/components/schemas/ChannelUpdate'
       responses:
         '200':
           description: Информация о канале успешно обновлена
@@ -244,137 +287,195 @@ paths:
         '404':
           description: Канал не найден
 
-  /channels/{channelName}/subscribe:
+    patch:
+      tags:
+        - Channels
+      summary: Частичное обновление информации о канале
+      description: Обновляет только те поля канала, которые указаны в запросе
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID канала
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelUpdate'
+      responses:
+        '200':
+          description: Информация о канале успешно частично обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '404':
+          description: Канал не найден
+
+  /channels/{id}/subscriptions:
     post:
       tags:
         - Channels
       summary: Подписать пользователя на канал
-      description: Подписывает пользователя на канал
+      description: Подписывает пользователя на канал по ID канала и ID пользователя
       parameters:
         - in: path
-          name: channelName
+          name: id
           required: true
           schema:
-            type: string
-            example: "Tech Insights"
-          description: Название канала
+            type: integer
+            example: 1
+          description: ID канала
         - in: query
-          name: nickname
+          name: userId
           required: true
           schema:
-            type: string
-            example: "petya1234"
-          description: Никнейм пользователя
+            type: integer
+            example: 1
+          description: ID пользователя
       responses:
         '200':
           description: Пользователь успешно подписан на канал
         '404':
-          description: Канал или пользователь не найдены
+          description: Канал или пользователь не найден
 
-  /channels/{channelName}/unsubscribe:
-    post:
+    delete:
       tags:
         - Channels
       summary: Отписать пользователя от канала
-      description: Отписывает пользователя от канала
+      description: Отписывает пользователя от канала по ID канала и ID пользователя
       parameters:
         - in: path
-          name: channelName
+          name: id
           required: true
           schema:
-            type: string
-            example: "Tech Insights"
-          description: Название канала
+            type: integer
+            example: 1
+          description: ID канала
         - in: query
-          name: nickname
+          name: userId
           required: true
           schema:
-            type: string
-            example: "petya1234"
-          description: Никнейм пользователя
+            type: integer
+            example: 1
+          description: ID пользователя
       responses:
         '200':
           description: Пользователь успешно отписан от канала
         '404':
-          description: Канал или пользователь не найдены
-
-  /users/{nickname}/subscriptions:
-    get:
-      tags:
-        - Users
-      summary: Получить подписки пользователя
-      description: Возвращает список всех каналов, на которые подписан пользователь
-      parameters:
-        - in: path
-          name: nickname
-          required: true
-          schema:
-            type: string
-            example: "petya1234"
-          description: Никнейм пользователя
-      responses:
-        '200':
-          description: Список подписок пользователя
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-                example: ["Tech Insights"]
+          description: Канал или пользователь не найден
 
 components:
   schemas:
     User:
       type: object
       properties:
+        id:
+          type: integer
+          description: ID пользователя
         nickname:
           type: string
           description: Никнейм пользователя
-          example: "petya1234"
         name:
           type: string
           description: Имя пользователя
-          example: "Petya Petrov"
         email:
           type: string
-          description: Электронная почта пользователя
-          example: "petya@gmail.com"
+          format: email
+          description: Email пользователя
 
+    UserDto:
+      type: object
+      properties:
+        nickname:
+          type: string
+          description: Никнейм пользователя
+        name:
+          type: string
+          description: Имя пользователя
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+
+    ChannelCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название канала
+        description:
+          type: string
+          description: Описание канала
+        authorId:
+          type: integer
+          description: ID автора канала
+        language:
+          type: string
+          description: Язык канала
+        categoryId:
+          type: integer
+          description: ID категории канала
+        avatar:
+          type: string
+          description: Аватар в формате base64
+
+    ChannelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название канала
+        description:
+          type: string
+          description: Описание канала
+        language:
+          type: string
+          description: Язык канала
+        categoryId:
+          type: integer
+          description: ID категории канала
+        avatar:
+          type: string
+          description: Аватар в формате base64
 
     Channel:
       type: object
       properties:
+        id:
+          type: integer
+          description: ID канала
+          example: 1
+        authorId:
+          type: integer
+          description: ID автора канала
+          example: 1
         name:
           type: string
           description: Название канала
           example: "Tech Insights"
         description:
           type: string
-          description: Краткое описание канала
-          example: "Канал о новинках технологий"
-        authorNickname:
-          type: string
-          description: Никнейм автора канала
-          example: petya1234
-        subscriberCount:
-          type: integer
-          description: Количество подписчиков
-          example: 150
+          description: Описание канала
+          example: "Канал о технике"
         language:
           type: string
-          description: Основной язык канала
+          description: Язык канала
           example: "RU"
-        avatarUrl:
+        categoryId:
+          type: integer
+          description: ID категории, к которой относится канал
+          example: 2
+        avatar:
           type: string
-          description: Ссылка на аватарку канала
-          example: "http://example.com/avatar.jpg"
-        category:
-          type: string
-          description: Категория канала
-          example: "Технологии"
-        createdDate:
+          description: Аватар канала в формате base64
+          example: "data:image/png;base64,iVBORw0K..."
+        createdAt:
           type: string
           format: date-time
-          description: Дата создания канала
-
+          description: Дата и время создания канала
+          example: "2024-10-12T08:30:00Z"
